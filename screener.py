@@ -1,0 +1,259 @@
+"""
+股票篩選邏輯
+
+依據 config.yaml 中的參數，對即時快照與歷史資料進行多條件篩選。
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
+
+from data_fetcher import FubonRealtimeClient, HistoricalDataClient
+from logger_setup import setup_logger
+
+logger = setup_logger("screener")
+
+# 台股每日總交易分鐘數 (09:00 ~ 13:30 = 270 分鐘)
+TOTAL_TRADING_MINUTES = 270
+# Fubon API 成交量單位為「張」，yfinance 換算時需 × 1000
+# 若 Fubon 實際回傳單位為「股」，請將此常數設為 1
+FUBON_VOLUME_UNIT = "lots"  # "lots" = 張, "shares" = 股
+
+
+@dataclass
+class ScreeningConfig:
+    price_change_min: float = 3.0
+    price_change_max: float = 5.0
+    volume_ratio_min: float = 1.0
+    turnover_rate_min: float = 5.0
+    turnover_rate_max: float = 10.0
+    market_cap_min_100m: float = 200.0
+    market_cap_max_100m: float = 1000.0
+    limit_up_lookback_days: int = 20
+    vwap_above_ratio_min: float = 0.70
+    vwap_dip_tolerance_pct: float = 0.5
+    vwap_recovery_bars: int = 3
+
+    @staticmethod
+    def from_dict(d: dict) -> "ScreeningConfig":
+        s = d.get("screening", {})
+        fields = {k for k in ScreeningConfig.__dataclass_fields__}
+        return ScreeningConfig(**{k: v for k, v in s.items() if k in fields})
+
+
+@dataclass
+class ScreenedStock:
+    symbol: str
+    name: str
+    price: float
+    price_change_pct: float
+    volume_ratio: float
+    turnover_rate_pct: float
+    market_cap_100m: float
+    had_limit_up: bool
+    vwap_above_ratio: float
+    vwap_dip_ok: bool
+    pass_all: bool
+    fail_reasons: list[str] = field(default_factory=list)
+
+
+# ────────────────────────────────────────────
+# VWAP 分析
+# ────────────────────────────────────────────
+
+def _calc_vwap(df: pd.DataFrame) -> pd.Series:
+    typical = (df["high"] + df["low"] + df["close"]) / 3
+    cum_pv = (typical * df["volume"]).cumsum()
+    cum_v = df["volume"].cumsum()
+    return cum_pv / cum_v.replace(0, np.nan)
+
+
+def _analyze_vwap(df: pd.DataFrame, cfg: ScreeningConfig) -> tuple[float, bool]:
+    """
+    回傳 (vwap_above_ratio, dip_recovery_ok)
+    - vwap_above_ratio: 收盤在 VWAP 上方的 bar 比例
+    - dip_recovery_ok: 是否符合「回踩有撐」特徵
+    """
+    if df.empty or len(df) < 5:
+        return 0.0, False
+
+    vwap = _calc_vwap(df)
+    close = df["close"]
+    above_ratio = float((close > vwap).sum() / len(df))
+
+    tol = cfg.vwap_dip_tolerance_pct / 100
+    dip_found = False
+    recovery_ok = True
+
+    for i in range(len(df)):
+        v = vwap.iloc[i]
+        c = close.iloc[i]
+        if pd.isna(v) or pd.isna(c) or v == 0:
+            continue
+        dist = (c - v) / v
+        if -tol <= dist <= tol:
+            dip_found = True
+            recovered = False
+            end = min(i + 1 + cfg.vwap_recovery_bars, len(df))
+            for j in range(i + 1, end):
+                if close.iloc[j] > vwap.iloc[j]:
+                    recovered = True
+                    break
+            if not recovered and end < len(df):
+                recovery_ok = False
+                break
+
+    if not dip_found:
+        recovery_ok = True
+
+    return above_ratio, recovery_ok
+
+
+# ────────────────────────────────────────────
+# 主篩選器
+# ────────────────────────────────────────────
+
+class StockScreener:
+    def __init__(self, config: ScreeningConfig):
+        self.cfg = config
+        self.realtime = FubonRealtimeClient()
+        self.historical = HistoricalDataClient()
+
+    def run(self) -> list[ScreenedStock]:
+        logger.info("開始執行股票篩選...")
+        now = datetime.now()
+        elapsed_minutes = max(1, (now.hour - 9) * 60 + now.minute)
+
+        logger.info("取得即時快照...")
+        snapshots = self.realtime.get_all_snapshots()
+        logger.info("共取得 %d 檔股票快照", len(snapshots))
+
+        passed: list[ScreenedStock] = []
+        for snap in snapshots:
+            stock = self._evaluate(snap, elapsed_minutes)
+            if stock is not None and stock.pass_all:
+                passed.append(stock)
+
+        logger.info("篩選完成，符合條件: %d / %d", len(passed), len(snapshots))
+        return passed
+
+    def _evaluate(self, snap: dict, elapsed_minutes: int) -> ScreenedStock | None:
+        try:
+            return self._evaluate_inner(snap, elapsed_minutes)
+        except Exception as exc:
+            symbol = snap.get("symbol", snap.get("code", "?"))
+            logger.debug("評估 %s 發生例外: %s", symbol, exc)
+            return None
+
+    def _evaluate_inner(self, snap: dict, elapsed_minutes: int) -> ScreenedStock:
+        symbol: str = str(snap.get("symbol", snap.get("code", "")))
+        name: str = snap.get("name", symbol)
+        # 判斷交易所，供 yfinance 加後綴 (.TW / .TWO)
+        raw_exchange: str = snap.get("_exchange", snap.get("exchange", "TWSE"))
+        exchange = "TWSE" if ("TWSE" in raw_exchange or "TSE" in raw_exchange) else "TPEx"
+
+        # Fugle snapshot 欄位名稱：closePrice, referencePrice, tradeVolume
+        close = float(
+            snap.get("closePrice") or snap.get("close") or snap.get("lastPrice") or 0
+        )
+        prev_close = float(
+            snap.get("referencePrice") or snap.get("previousClose") or 0
+        )
+        # tradeVolume 單位為「張」
+        volume_lots = float(
+            snap.get("tradeVolume") or snap.get("volume") or snap.get("totalVolume") or 0
+        )
+
+        fail_reasons: list[str] = []
+
+        # ── 1. 漲幅 ──────────────────────────────────────
+        if prev_close and prev_close > 0:
+            pct_change = (close - prev_close) / prev_close * 100
+        else:
+            pct_change = float(snap.get("changePercent", snap.get("change_pct", 0)) or 0)
+
+        if not (self.cfg.price_change_min <= pct_change <= self.cfg.price_change_max):
+            fail_reasons.append(
+                f"漲幅 {pct_change:.2f}% ∉ [{self.cfg.price_change_min}, {self.cfg.price_change_max}]%"
+            )
+
+        # ── 2. 量比 ──────────────────────────────────────
+        avg5_lots = self.historical.get_5day_avg_volume(symbol, exchange)
+        if avg5_lots > 0:
+            today_rate = volume_lots / elapsed_minutes
+            hist_rate = avg5_lots / TOTAL_TRADING_MINUTES
+            volume_ratio = today_rate / hist_rate if hist_rate > 0 else 0.0
+        else:
+            volume_ratio = 0.0
+
+        if volume_ratio < self.cfg.volume_ratio_min:
+            fail_reasons.append(f"量比 {volume_ratio:.2f} < {self.cfg.volume_ratio_min}")
+
+        # ── 3. 換手率 ─────────────────────────────────────
+        # 發行股數 (股)；Fubon 成交量為張，需 × 1000 換算
+        shares = self.historical.get_shares_outstanding(symbol, exchange)
+        if shares > 0 and volume_lots > 0:
+            volume_shares = volume_lots * 1000
+            est_full_day_shares = volume_shares / elapsed_minutes * TOTAL_TRADING_MINUTES
+            turnover_rate = est_full_day_shares / shares * 100
+        else:
+            turnover_rate = 0.0
+
+        if not (self.cfg.turnover_rate_min <= turnover_rate <= self.cfg.turnover_rate_max):
+            fail_reasons.append(
+                f"換手率 {turnover_rate:.2f}% ∉ [{self.cfg.turnover_rate_min}, {self.cfg.turnover_rate_max}]%"
+            )
+
+        # ── 4. 市值 ───────────────────────────────────────
+        if shares > 0 and close > 0:
+            market_cap_100m = close * shares / 1e8
+        else:
+            market_cap_100m = 0.0
+
+        if not (self.cfg.market_cap_min_100m <= market_cap_100m <= self.cfg.market_cap_max_100m):
+            fail_reasons.append(
+                f"市值 {market_cap_100m:.0f}億 ∉ [{self.cfg.market_cap_min_100m:.0f}, {self.cfg.market_cap_max_100m:.0f}]億"
+            )
+
+        # ── 5. 近期漲停（僅前四項都通過才查詢，節省 API）────
+        had_limit_up = False
+        if not fail_reasons:
+            had_limit_up = self.historical.had_limit_up_recently(
+                symbol, exchange, self.cfg.limit_up_lookback_days
+            )
+            if not had_limit_up:
+                fail_reasons.append(f"近 {self.cfg.limit_up_lookback_days} 日無漲停紀錄")
+
+        # ── 6. VWAP 分析（僅前五項都通過才查詢）────────────
+        vwap_above_ratio = 0.0
+        vwap_dip_ok = False
+        if not fail_reasons:
+            candles = self.realtime.get_minute_candles(symbol)
+            if not candles.empty:
+                vwap_above_ratio, vwap_dip_ok = _analyze_vwap(candles, self.cfg)
+
+            if vwap_above_ratio < self.cfg.vwap_above_ratio_min:
+                fail_reasons.append(
+                    f"VWAP 上方比例 {vwap_above_ratio:.0%} < {self.cfg.vwap_above_ratio_min:.0%}"
+                )
+            if not vwap_dip_ok:
+                fail_reasons.append("回踩均線後無有效承接")
+
+        return ScreenedStock(
+            symbol=symbol,
+            name=name,
+            price=close,
+            price_change_pct=round(pct_change, 2),
+            volume_ratio=round(volume_ratio, 2),
+            turnover_rate_pct=round(turnover_rate, 2),
+            market_cap_100m=round(market_cap_100m, 1),
+            had_limit_up=had_limit_up,
+            vwap_above_ratio=round(vwap_above_ratio, 3),
+            vwap_dip_ok=vwap_dip_ok,
+            pass_all=not fail_reasons,
+            fail_reasons=fail_reasons,
+        )

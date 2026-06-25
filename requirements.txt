@@ -1,0 +1,11 @@
+lxml>=5.0.0
+pandas>=2.0.0
+numpy>=1.26.0
+fubon_neo
+yfinance
+requests
+schedule
+APScheduler
+python-dotenv
+PyYAML
+pytz
