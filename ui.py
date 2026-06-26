@@ -113,10 +113,6 @@ with tab3:
     fubon_cert = st.text_input("憑證路徑 (.pfx)", key="cert_input", disabled=True)
     fubon_cert_pw = st.text_input("憑證密碼 (若與登入密碼不同則填寫)", value=env_data.get("FUBON_CERT_PASSWORD", ""), type="password")
 
-    st.subheader("Gmail 發信設定")
-    email_sender = st.text_input("寄件人 Gmail", value=env_data.get("EMAIL_SENDER", ""))
-    email_pw = st.text_input("應用程式密碼", value=env_data.get("EMAIL_APP_PASSWORD", ""), type="password")
-
 if "show_details" not in st.session_state:
     st.session_state.show_details = False
 if "is_running" not in st.session_state:
@@ -267,9 +263,8 @@ def save_all():
     }
     save_config(cfg)
 
-    env = {
-        "EMAIL_SENDER": email_sender,
-        "EMAIL_APP_PASSWORD": email_pw,
+    env = env_data.copy()
+    env.update({
         "EMAIL_RECIPIENT": to_email,
         "SMTP_HOST": "smtp.gmail.com",
         "SMTP_PORT": "587",
@@ -277,7 +272,7 @@ def save_all():
         "FUBON_PASSWORD": fubon_pw,
         "FUBON_CERT_PATH": fubon_cert,
         "FUBON_CERT_PASSWORD": fubon_cert_pw,
-    }
+    })
     save_env(env)
 
 
