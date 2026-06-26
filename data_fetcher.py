@@ -43,14 +43,40 @@ class FubonRealtimeClient:
         except ImportError:
             raise RuntimeError("fubon_neo 套件未安裝，請執行: pip install fubon_neo")
 
+        account  = os.environ.get("FUBON_ACCOUNT", "")
+        password = os.environ.get("FUBON_PASSWORD", "")
+        cert     = os.environ.get("FUBON_CERT_PATH", "")
+        cert_pw  = os.environ.get("FUBON_CERT_PASSWORD", "")
+
+        if not account or not password or not cert:
+            raise RuntimeError(
+                "富邦 API 帳號/密碼/憑證路徑未設定，"
+                "請至 UI「API 設定」頁籤填寫後儲存"
+            )
+        if not os.path.exists(cert):
+            raise RuntimeError(
+                f"找不到憑證檔案：{cert}\n"
+                "請確認 FUBON_CERT_PATH 路徑正確"
+            )
+
         sdk = FubonSDK()
-        sdk.login(
-            os.environ["FUBON_ACCOUNT"],
-            os.environ["FUBON_PASSWORD"],
-            os.environ["FUBON_CERT_PATH"],
-        )
-        # init_realtime() 在 login 後呼叫，才會建立 sdk.marketdata
-        sdk.init_realtime()
+        try:
+            accounts = sdk.login(account, password, cert, cert_pw)
+            logger.info("富邦 SDK 登入成功")
+            if not accounts.is_success:
+                raise RuntimeError(f"登入失敗: {accounts.message}")
+        except Exception as exc:
+            raise RuntimeError(f"富邦 SDK 登入失敗: {exc}") from exc
+
+        try:
+            sdk.init_realtime()
+            
+        except Exception as exc:
+            raise RuntimeError(
+                f"富邦 SDK init_realtime 失敗: {exc}\n"
+                "可能原因：帳號密碼錯誤、憑證過期、或網路無法連線"
+            ) from exc
+
         self._sdk = sdk
         logger.info("富邦 Neo API 登入並初始化成功")
         return sdk

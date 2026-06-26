@@ -1,10 +1,10 @@
 screening:
-  price_change_min: 3.0
-  price_change_max: 5.0
-  volume_ratio_min: 1.0
-  turnover_rate_min: 5.0
+  price_change_min: 0.0
+  price_change_max: 9.0
+  volume_ratio_min: 0.2
+  turnover_rate_min: 2.0
   turnover_rate_max: 10.0
-  market_cap_min_100m: 200.0
+  market_cap_min_100m: 20.0
   market_cap_max_100m: 1000.0
   limit_up_lookback_days: 20
   vwap_above_ratio_min: 0.7

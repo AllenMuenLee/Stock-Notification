@@ -11,7 +11,7 @@
 3. **重要：請務必選擇以下免費方案的規格**：
    * **區域 (Region)**：只能選 `us-west1` (奧勒岡)、`us-central1` (愛荷華) 或 `us-east1` (南卡羅來納) 其中之一。
    * **機器設定**：選擇 `e2-micro`。
-   * **開機磁碟**：可選 Ubuntu 22.04 LTS，磁碟大小可設為標準永久磁碟 (Standard Persistent Disk) 30 GB 以下 (都在免費額度內)。
+   * **開機磁碟**：請選擇 Debian (例如 Debian 12 Bookworm)，磁碟大小可設為標準永久磁碟 (Standard Persistent Disk) 30 GB 以下 (都在免費額度內)。
 4. **防火牆**：勾選「允許 HTTP 流量」與「允許 HTTPS 流量」。
 5. 點擊「**建立**」。
 

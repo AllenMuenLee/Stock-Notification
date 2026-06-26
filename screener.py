@@ -129,20 +129,29 @@ class StockScreener:
         elapsed_minutes = max(1, (now.hour - 9) * 60 + now.minute)
 
         logger.info("取得即時快照...")
-        snapshots = self.realtime.get_all_snapshots()
+        try:
+            snapshots = self.realtime.get_all_snapshots()
+        except RuntimeError as exc:
+            logger.error("無法取得即時快照: %s", exc)
+            return []
         logger.info("共取得 %d 檔股票快照", len(snapshots))
 
-        passed: list[ScreenedStock] = []
+        all_stocks: list[ScreenedStock] = []
         for snap in snapshots:
             stock = self._evaluate(snap, elapsed_minutes)
-            if stock is not None and stock.pass_all:
-                passed.append(stock)
+            if stock is not None:
+                all_stocks.append(stock)
 
-        logger.info("篩選完成，符合條件: %d / %d", len(passed), len(snapshots))
-        return passed
+        passed_count = sum(1 for s in all_stocks if s.pass_all)
+        logger.info("篩選完成，符合條件: %d / 評估: %d / 快照: %d",
+                    passed_count, len(all_stocks), len(snapshots))
+        return all_stocks
 
     def _evaluate(self, snap: dict, elapsed_minutes: int) -> ScreenedStock | None:
         try:
+            symbol = str(snap.get("symbol", snap.get("code", "")))
+            if len(symbol) >= 6:
+                return None  # 直接略過權證與特殊商品，避免 yfinance 報錯
             return self._evaluate_inner(snap, elapsed_minutes)
         except Exception as exc:
             symbol = snap.get("symbol", snap.get("code", "?"))
@@ -182,42 +191,43 @@ class StockScreener:
             )
 
         # ── 2. 量比 ──────────────────────────────────────
-        avg5_lots = self.historical.get_5day_avg_volume(symbol, exchange)
-        if avg5_lots > 0:
-            today_rate = volume_lots / elapsed_minutes
-            hist_rate = avg5_lots / TOTAL_TRADING_MINUTES
-            volume_ratio = today_rate / hist_rate if hist_rate > 0 else 0.0
-        else:
-            volume_ratio = 0.0
-
-        if volume_ratio < self.cfg.volume_ratio_min:
-            fail_reasons.append(f"量比 {volume_ratio:.2f} < {self.cfg.volume_ratio_min}")
+        volume_ratio = 0.0
+        if not fail_reasons:
+            avg5_lots = self.historical.get_5day_avg_volume(symbol, exchange)
+            if avg5_lots > 0:
+                today_rate = volume_lots / elapsed_minutes
+                hist_rate = avg5_lots / TOTAL_TRADING_MINUTES
+                volume_ratio = today_rate / hist_rate if hist_rate > 0 else 0.0
+            
+            if volume_ratio < self.cfg.volume_ratio_min:
+                fail_reasons.append(f"量比 {volume_ratio:.2f} < {self.cfg.volume_ratio_min}")
 
         # ── 3. 換手率 ─────────────────────────────────────
-        # 發行股數 (股)；Fubon 成交量為張，需 × 1000 換算
-        shares = self.historical.get_shares_outstanding(symbol, exchange)
-        if shares > 0 and volume_lots > 0:
-            volume_shares = volume_lots * 1000
-            est_full_day_shares = volume_shares / elapsed_minutes * TOTAL_TRADING_MINUTES
-            turnover_rate = est_full_day_shares / shares * 100
-        else:
-            turnover_rate = 0.0
-
-        if not (self.cfg.turnover_rate_min <= turnover_rate <= self.cfg.turnover_rate_max):
-            fail_reasons.append(
-                f"換手率 {turnover_rate:.2f}% ∉ [{self.cfg.turnover_rate_min}, {self.cfg.turnover_rate_max}]%"
-            )
+        turnover_rate = 0.0
+        shares = 0.0
+        if not fail_reasons:
+            # 發行股數 (股)；Fubon 成交量為張，需 × 1000 換算
+            shares = self.historical.get_shares_outstanding(symbol, exchange)
+            if shares > 0 and volume_lots > 0:
+                volume_shares = volume_lots * 1000
+                est_full_day_shares = volume_shares / elapsed_minutes * TOTAL_TRADING_MINUTES
+                turnover_rate = est_full_day_shares / shares * 100
+            
+            if not (self.cfg.turnover_rate_min <= turnover_rate <= self.cfg.turnover_rate_max):
+                fail_reasons.append(
+                    f"換手率 {turnover_rate:.2f}% ∉ [{self.cfg.turnover_rate_min}, {self.cfg.turnover_rate_max}]%"
+                )
 
         # ── 4. 市值 ───────────────────────────────────────
-        if shares > 0 and close > 0:
-            market_cap_100m = close * shares / 1e8
-        else:
-            market_cap_100m = 0.0
-
-        if not (self.cfg.market_cap_min_100m <= market_cap_100m <= self.cfg.market_cap_max_100m):
-            fail_reasons.append(
-                f"市值 {market_cap_100m:.0f}億 ∉ [{self.cfg.market_cap_min_100m:.0f}, {self.cfg.market_cap_max_100m:.0f}]億"
-            )
+        market_cap_100m = 0.0
+        if not fail_reasons:
+            if shares > 0 and close > 0:
+                market_cap_100m = close * shares / 1e8
+            
+            if not (self.cfg.market_cap_min_100m <= market_cap_100m <= self.cfg.market_cap_max_100m):
+                fail_reasons.append(
+                    f"市值 {market_cap_100m:.0f}億 ∉ [{self.cfg.market_cap_min_100m:.0f}, {self.cfg.market_cap_max_100m:.0f}]億"
+                )
 
         # ── 5. 近期漲停（僅前四項都通過才查詢，節省 API）────
         had_limit_up = False

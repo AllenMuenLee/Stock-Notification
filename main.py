@@ -5,12 +5,14 @@
   python main.py              → 啟動排程（每日 13:00 執行）
   python main.py --run-now   → 忽略排程，立即執行一次篩選
   python main.py --schedule  → 同無參數（顯式排程模式）
-  python ui.py               → 開啟圖形設定介面
+  streamlit run ui.py        → 開啟網頁設定介面
 """
 
 from __future__ import annotations
 
 import argparse
+import dataclasses
+import json
 import os
 import sys
 import time
@@ -27,6 +29,9 @@ from trading_calendar import is_trading_day
 load_dotenv()
 logger = setup_logger("main")
 
+RESULTS_DIR = "results"
+RESULTS_FILE = os.path.join(RESULTS_DIR, "latest_run.json")
+
 
 # ────────────────────────────────────────────
 # 設定載入
@@ -41,12 +46,30 @@ def load_config(path: str = "config.yaml") -> dict:
 
 
 # ────────────────────────────────────────────
+# 結果儲存
+# ────────────────────────────────────────────
+
+def save_results(all_stocks: list[ScreenedStock], run_time: str) -> None:
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    payload = {
+        "run_time": run_time,
+        "total_evaluated": len(all_stocks),
+        "passed": sum(1 for s in all_stocks if s.pass_all),
+        "stocks": [dataclasses.asdict(s) for s in all_stocks],
+    }
+    with open(RESULTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    logger.info("篩選明細已儲存至 %s", RESULTS_FILE)
+
+
+# ────────────────────────────────────────────
 # 核心篩選流程
 # ────────────────────────────────────────────
 
 def run_screening(config: dict) -> list[ScreenedStock]:
     logger.info("═" * 50)
-    logger.info("開始執行股票篩選 (%s)", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    run_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    logger.info("開始執行股票篩選 (%s)", run_time)
 
     if not is_trading_day():
         logger.info("今日非台股交易日，略過篩選")
@@ -56,10 +79,14 @@ def run_screening(config: dict) -> list[ScreenedStock]:
     screener = StockScreener(screening_cfg)
 
     try:
-        passed_stocks = screener.run()
+        all_stocks = screener.run()
     except Exception as exc:
         logger.exception("篩選過程發生未預期錯誤: %s", exc)
         return []
+
+    passed_stocks = [s for s in all_stocks if s.pass_all]
+
+    save_results(all_stocks, run_time)
 
     try:
         notifier = EmailNotifier(config)
