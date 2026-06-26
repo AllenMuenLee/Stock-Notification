@@ -110,7 +110,7 @@ with tab3:
             st.session_state.cert_input = cert_path
             st.rerun()
             
-    fubon_cert = st.text_input("憑證路徑 (.pfx)", key="cert_input")
+    fubon_cert = st.text_input("憑證路徑 (.pfx)", key="cert_input", disabled=True)
     fubon_cert_pw = st.text_input("憑證密碼 (若與登入密碼不同則填寫)", value=env_data.get("FUBON_CERT_PASSWORD", ""), type="password")
 
     st.subheader("Gmail 發信設定")
@@ -326,4 +326,3 @@ if sched_btn:
         )
     threading.Thread(target=run_scheduler, daemon=True).start()
     st.success(f"⏰ 已在背景啟動排程 — 每日 {run_time} 自動執行。")
-    st.info("提示：在 Linux 主機上，更推薦使用 `tmux` 或 `systemd` 讓程式常駐於背景，可避免 Web UI 關閉時排程中斷。")
