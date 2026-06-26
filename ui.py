@@ -98,7 +98,19 @@ with tab3:
     st.subheader("富邦 Neo API")
     fubon_acc = st.text_input("帳號", value=env_data.get("FUBON_ACCOUNT", ""))
     fubon_pw = st.text_input("密碼", value=env_data.get("FUBON_PASSWORD", ""), type="password")
-    fubon_cert = st.text_input("憑證路徑 (.pfx)", value=env_data.get("FUBON_CERT_PATH", ""))
+    
+    uploaded_cert = st.file_uploader("上傳憑證 (.pfx) - 將自動儲存至 ~/CAFubon", type=["pfx"])
+    if uploaded_cert is not None:
+        cert_dir = os.path.expanduser("~/CAFubon")
+        os.makedirs(cert_dir, exist_ok=True)
+        cert_path = os.path.join(cert_dir, uploaded_cert.name)
+        if st.session_state.cert_input != cert_path:
+            with open(cert_path, "wb") as f:
+                f.write(uploaded_cert.getbuffer())
+            st.session_state.cert_input = cert_path
+            st.rerun()
+            
+    fubon_cert = st.text_input("憑證路徑 (.pfx)", key="cert_input")
     fubon_cert_pw = st.text_input("憑證密碼 (若與登入密碼不同則填寫)", value=env_data.get("FUBON_CERT_PASSWORD", ""), type="password")
 
     st.subheader("Gmail 發信設定")
@@ -113,6 +125,8 @@ if "run_logs" not in st.session_state:
     st.session_state.run_logs = []
 if "page" not in st.session_state:
     st.session_state.page = 0
+if "cert_input" not in st.session_state:
+    st.session_state.cert_input = env_data.get("FUBON_CERT_PATH", "")
 
 with tab4:
     st.subheader("執行控制")
