@@ -53,6 +53,17 @@ st.title("股票自動篩選系統 — 參數設定")
 config_data = load_config()
 env_data = load_env()
 
+if "show_details" not in st.session_state:
+    st.session_state.show_details = False
+if "is_running" not in st.session_state:
+    st.session_state.is_running = False
+if "run_logs" not in st.session_state:
+    st.session_state.run_logs = []
+if "page" not in st.session_state:
+    st.session_state.page = 0
+if "cert_input" not in st.session_state:
+    st.session_state.cert_input = env_data.get("FUBON_CERT_PATH", "")
+
 sc = config_data.get("screening", {})
 nt = config_data.get("notification", {})
 sh = config_data.get("schedule", {})
@@ -112,17 +123,6 @@ with tab3:
             
     fubon_cert = st.text_input("憑證路徑 (.pfx)", key="cert_input", disabled=True)
     fubon_cert_pw = st.text_input("憑證密碼 (若與登入密碼不同則填寫)", value=env_data.get("FUBON_CERT_PASSWORD", ""), type="password")
-
-if "show_details" not in st.session_state:
-    st.session_state.show_details = False
-if "is_running" not in st.session_state:
-    st.session_state.is_running = False
-if "run_logs" not in st.session_state:
-    st.session_state.run_logs = []
-if "page" not in st.session_state:
-    st.session_state.page = 0
-if "cert_input" not in st.session_state:
-    st.session_state.cert_input = env_data.get("FUBON_CERT_PATH", "")
 
 with tab4:
     st.subheader("執行控制")
