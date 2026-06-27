@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import yaml
+import hmac
 import streamlit as st
 
 CONFIG_FILE = "config.yaml"
@@ -67,6 +68,32 @@ if "cert_input" not in st.session_state:
 sc = config_data.get("screening", {})
 nt = config_data.get("notification", {})
 sh = config_data.get("schedule", {})
+
+def check_password():
+    """驗證密碼"""
+    expected_password = env_data.get("UI_PASSWORD")
+
+    if not expected_password:
+        st.warning("⚠️ 系統尚未設定管理介面密碼！為了您的安全，請直接修改伺服器上的 `.env` 檔案，新增 `UI_PASSWORD=您的密碼`，然後重新整理網頁。")
+        return False
+
+    def password_entered():
+        if hmac.compare_digest(st.session_state["password"], expected_password):
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]
+        else:
+            st.session_state["password_correct"] = False
+
+    if st.session_state.get("password_correct", False):
+        return True
+
+    st.text_input("🔒 請輸入系統密碼以解鎖管理介面", type="password", on_change=password_entered, key="password")
+    if "password_correct" in st.session_state and not st.session_state["password_correct"]:
+        st.error("😕 密碼錯誤，請重試。")
+    return False
+
+if not check_password():
+    st.stop()
 
 tab1, tab2, tab3, tab4 = st.tabs(["篩選條件", "通知設定", "API 設定", "執行 / 狀態"])
 
