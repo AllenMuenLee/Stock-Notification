@@ -146,6 +146,12 @@ with tab3:
             with open(cert_path, "wb") as f:
                 f.write(uploaded_cert.getbuffer())
             st.session_state.cert_input = cert_path
+            
+            # 立即將憑證路徑儲存至 .env，避免重新整理網頁後消失
+            current_env = load_env()
+            current_env["FUBON_CERT_PATH"] = cert_path
+            save_env(current_env)
+            
             st.rerun()
             
     fubon_cert = st.text_input("憑證路徑 (.pfx)", key="cert_input", disabled=True)
