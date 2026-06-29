@@ -141,12 +141,15 @@ with tab3:
         os.makedirs(cert_dir, exist_ok=True)
         cert_path = os.path.join(cert_dir, uploaded_cert.name)
         
-        current_env = load_env()
-        if current_env.get("FUBON_CERT_PATH") != cert_path:
+        file_hash = hash(uploaded_cert.getvalue())
+        if st.session_state.get("last_uploaded_cert_hash") != file_hash:
+            st.session_state["last_uploaded_cert_hash"] = file_hash
+            
             with open(cert_path, "wb") as f:
                 f.write(uploaded_cert.getbuffer())
             
             # 立即將憑證路徑儲存至 .env，避免重新整理網頁後消失
+            current_env = load_env()
             current_env["FUBON_CERT_PATH"] = cert_path
             save_env(current_env)
             
