@@ -62,8 +62,6 @@ if "run_logs" not in st.session_state:
     st.session_state.run_logs = []
 if "page" not in st.session_state:
     st.session_state.page = 0
-if "cert_input" not in st.session_state:
-    st.session_state.cert_input = env_data.get("FUBON_CERT_PATH", "")
 
 sc = config_data.get("screening", {})
 nt = config_data.get("notification", {})
@@ -142,19 +140,19 @@ with tab3:
         cert_dir = os.path.expanduser("~/CAFubon")
         os.makedirs(cert_dir, exist_ok=True)
         cert_path = os.path.join(cert_dir, uploaded_cert.name)
-        if st.session_state.cert_input != cert_path:
+        
+        current_env = load_env()
+        if current_env.get("FUBON_CERT_PATH") != cert_path:
             with open(cert_path, "wb") as f:
                 f.write(uploaded_cert.getbuffer())
-            st.session_state.cert_input = cert_path
             
             # 立即將憑證路徑儲存至 .env，避免重新整理網頁後消失
-            current_env = load_env()
             current_env["FUBON_CERT_PATH"] = cert_path
             save_env(current_env)
             
             st.rerun()
             
-    fubon_cert = st.text_input("憑證路徑 (.pfx)", key="cert_input", disabled=True)
+    fubon_cert = st.text_input("憑證路徑 (.pfx)", value=env_data.get("FUBON_CERT_PATH", ""), disabled=True)
     fubon_cert_pw = st.text_input("憑證密碼 (若與登入密碼不同則填寫)", value=env_data.get("FUBON_CERT_PASSWORD", ""), type="password")
 
 with tab4:
