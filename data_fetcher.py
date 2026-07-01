@@ -139,6 +139,17 @@ class FubonRealtimeClient:
             logger.error("取得 %s 分鐘 K 棒失敗: %s", symbol, exc)
             return pd.DataFrame()
 
+    def close(self):
+        """關閉連線並釋放資源，避免 memory / connection leak"""
+        if self._sdk is not None:
+            try:
+                self._sdk.logout()
+                logger.info("富邦 SDK 登出成功")
+            except Exception as exc:
+                logger.error("富邦 SDK 登出失敗: %s", exc)
+            self._sdk = None
+
+
 
 # ────────────────────────────────────────────
 # yfinance 歷史資料
@@ -212,3 +223,8 @@ class HistoricalDataClient:
         if df.empty or "Volume" not in df.columns:
             return 0.0
         return float(df["Volume"].tail(5).mean() / _SHARES_PER_LOT)
+
+    def clear_cache(self):
+        """清除快取，幫助釋放記憶體"""
+        self._history_cache.clear()
+        self._shares_cache.clear()

@@ -78,23 +78,26 @@ def run_screening(config: dict) -> list[ScreenedStock]:
     screening_cfg = ScreeningConfig.from_dict(config)
     screener = StockScreener(screening_cfg)
 
+    passed_stocks = []
     try:
         all_stocks = screener.run()
+        passed_stocks = [s for s in all_stocks if s.pass_all]
+        save_results(all_stocks, run_time)
+
+        try:
+            notifier = EmailNotifier(config)
+            notifier.send(passed_stocks)
+        except Exception as exc:
+            logger.error("通知發送失敗: %s", exc)
+
+        logger.info("本次篩選結束，共 %d 檔符合條件", len(passed_stocks))
     except Exception as exc:
         logger.exception("篩選過程發生未預期錯誤: %s", exc)
-        return []
+    finally:
+        screener.close()
+        import gc
+        gc.collect()
 
-    passed_stocks = [s for s in all_stocks if s.pass_all]
-
-    save_results(all_stocks, run_time)
-
-    try:
-        notifier = EmailNotifier(config)
-        notifier.send(passed_stocks)
-    except Exception as exc:
-        logger.error("通知發送失敗: %s", exc)
-
-    logger.info("本次篩選結束，共 %d 檔符合條件", len(passed_stocks))
     logger.info("═" * 50)
     return passed_stocks
 

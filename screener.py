@@ -123,6 +123,11 @@ class StockScreener:
         self.realtime = FubonRealtimeClient()
         self.historical = HistoricalDataClient()
 
+    def close(self):
+        """釋放連線與記憶體資源"""
+        self.realtime.close()
+        self.historical.clear_cache()
+
     def run(self) -> list[ScreenedStock]:
         logger.info("開始執行股票篩選...")
         now = datetime.now()

@@ -7,9 +7,7 @@ def setup_logger(name: str = "stock_notifier") -> logging.Logger:
     logs_dir = "logs"
     os.makedirs(logs_dir, exist_ok=True)
 
-    log_file = os.path.join(
-        logs_dir, f"stock_notifier_{datetime.now().strftime('%Y%m%d')}.log"
-    )
+    log_file = os.path.join(logs_dir, "stock_notifier.log")
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
@@ -19,8 +17,14 @@ def setup_logger(name: str = "stock_notifier") -> logging.Logger:
             "%(asctime)s [%(levelname)s] %(name)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
-        fh = logging.FileHandler(log_file, encoding="utf-8")
+        
+        from logging.handlers import TimedRotatingFileHandler
+        # Rotate daily at midnight, keep 30 days of backup logs
+        fh = TimedRotatingFileHandler(
+            log_file, when="midnight", interval=1, backupCount=30, encoding="utf-8"
+        )
         fh.setFormatter(fmt)
+        
         import sys
         ch = logging.StreamHandler(stream=sys.stdout)
         ch.setFormatter(fmt)
@@ -30,6 +34,7 @@ def setup_logger(name: str = "stock_notifier") -> logging.Logger:
                 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
             except Exception:
                 pass
+        
         logger.addHandler(fh)
         logger.addHandler(ch)
 
