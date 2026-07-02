@@ -250,13 +250,19 @@ class HistoricalDataClient:
 
     def get_5day_avg_volume(self, symbol: str, exchange: str = "TWSE") -> float:
         """
-        近 5 個交易日平均成交量（單位：張/lot）。
+        不含今日的近 5 個完整交易日平均成交量（單位：張/lot）。
         yfinance Volume 為「股」，除以 1000 換算為「張」。
         """
         df = self._get_history(symbol, exchange, period="15d")
         if df.empty or "Volume" not in df.columns:
             return 0.0
-        return float(df["Volume"].tail(5).mean() / _SHARES_PER_LOT)
+        try:
+            historical_df = df[pd.to_datetime(df.index).date < date.today()]
+        except Exception:
+            historical_df = df
+        if historical_df.empty:
+            historical_df = df
+        return float(historical_df["Volume"].tail(5).mean() / _SHARES_PER_LOT)
 
     def clear_cache(self):
         """清除快取，幫助釋放記憶體"""

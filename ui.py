@@ -180,7 +180,7 @@ with tab4:
     st.markdown("---")
     st.subheader("篩選明細")
 
-    detail_col1, detail_col2, detail_col3 = st.columns([1, 1, 1])
+    detail_col1, detail_col2, detail_col3 = st.columns([1, 1, 2])
     toggle_label = "隱藏篩選明細" if st.session_state.show_details else "查看上次篩選明細"
     if detail_col1.button(toggle_label, use_container_width=True, disabled=st.session_state.is_running):
         st.session_state.show_details = not st.session_state.show_details
@@ -195,13 +195,23 @@ with tab4:
         label_visibility="collapsed",
         on_change=reset_page,
     )
+    detail_search = detail_col3.text_input(
+        "搜尋股票",
+        placeholder="搜尋代號、名稱或原因",
+        label_visibility="collapsed",
+        on_change=reset_page,
+    )
 
     if st.session_state.show_details:
         if not os.path.exists(RESULTS_FILE):
             st.warning("尚無篩選記錄，請先執行篩選")
         else:
-            with open(RESULTS_FILE, encoding="utf-8") as f:
-                results = json.load(f)
+            try:
+                with open(RESULTS_FILE, encoding="utf-8") as f:
+                    results = json.load(f)
+            except json.JSONDecodeError as exc:
+                st.error(f"篩選明細檔案格式錯誤，無法讀取：{exc}")
+                results = {"stocks": [], "run_time": "", "total_evaluated": 0, "passed": 0}
 
             stocks = results.get("stocks", [])
             run_ts = results.get("run_time", "")
@@ -219,6 +229,15 @@ with tab4:
                 stocks = [s for s in stocks if s["pass_all"]]
             elif detail_filter == "未通過":
                 stocks = [s for s in stocks if not s["pass_all"]]
+
+            query = detail_search.strip().lower()
+            if query:
+                def matches_query(s):
+                    fail_reasons = " ".join(s.get("fail_reasons", []))
+                    haystack = f"{s.get('symbol', '')} {s.get('name', '')} {fail_reasons}".lower()
+                    return query in haystack
+
+                stocks = [s for s in stocks if matches_query(s)]
 
             if not stocks:
                 st.info("此條件下無資料")

@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -16,13 +15,6 @@ from data_fetcher import FubonRealtimeClient, HistoricalDataClient
 from logger_setup import setup_logger
 
 logger = setup_logger("screener")
-
-# 台股每日總交易分鐘數 (09:00 ~ 13:30 = 270 分鐘)
-TOTAL_TRADING_MINUTES = 270
-# Fubon API 成交量單位為「張」，yfinance 換算時需 × 1000
-# 若 Fubon 實際回傳單位為「股」，請將此常數設為 1
-FUBON_VOLUME_UNIT = "lots"  # "lots" = 張, "shares" = 股
-
 
 @dataclass
 class ScreeningConfig:
@@ -113,6 +105,24 @@ def _analyze_vwap(df: pd.DataFrame, cfg: ScreeningConfig) -> tuple[float, bool]:
     return above_ratio, recovery_ok
 
 
+def _to_float(value: object) -> float:
+    if value is None or value == "":
+        return 0.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _snapshot_volume_lots(snap: dict) -> float:
+    # totalVolume is cumulative traded volume; lastSize is only the latest fill.
+    for key in ("totalVolume", "total_volume", "volume", "tradeVolume"):
+        volume = _to_float(snap.get(key))
+        if volume > 0:
+            return volume
+    return 0.0
+
+
 # ────────────────────────────────────────────
 # 主篩選器
 # ────────────────────────────────────────────
@@ -140,16 +150,16 @@ class StockScreener:
 
         def _fetch_static_data(snap: dict):
             symbol = str(snap.get("symbol", snap.get("code", "")))
-            if len(symbol) >= 6:
+            if not symbol:
                 return
 
             # --- 先用即時快照檢查漲幅，只有符合條件的才抓取歷史資料 ---
-            close = float(snap.get("closePrice") or snap.get("close") or snap.get("lastPrice") or 0)
-            prev_close = float(snap.get("referencePrice") or snap.get("previousClose") or 0)
+            close = _to_float(snap.get("closePrice") or snap.get("close") or snap.get("lastPrice"))
+            prev_close = _to_float(snap.get("referencePrice") or snap.get("previousClose"))
             if prev_close and prev_close > 0:
                 pct_change = (close - prev_close) / prev_close * 100
             else:
-                pct_change = float(snap.get("changePercent", snap.get("change_pct", 0)) or 0)
+                pct_change = _to_float(snap.get("changePercent", snap.get("change_pct")))
 
             if not (self.cfg.price_change_min <= pct_change <= self.cfg.price_change_max):
                 return
@@ -180,8 +190,6 @@ class StockScreener:
 
     def run(self) -> list[ScreenedStock]:
         logger.info("開始執行股票篩選...")
-        now = datetime.now()
-        elapsed_minutes = max(1, (now.hour - 9) * 60 + now.minute)
 
         logger.info("取得即時快照...")
         try:
@@ -197,51 +205,49 @@ class StockScreener:
         from concurrent.futures import ThreadPoolExecutor, as_completed
         with ThreadPoolExecutor(max_workers=5) as executor:
             future_to_snap = {
-                executor.submit(self._evaluate, snap, elapsed_minutes): snap 
+                executor.submit(self._evaluate, snap): snap 
                 for snap in snapshots
             }
             for future in as_completed(future_to_snap):
                 try:
                     stock = future.result()
-                    if stock is not None:
-                        all_stocks.append(stock)
+                    all_stocks.append(stock)
                 except Exception as exc:
                     logger.error("評估股票時發生例外: %s", exc)
+                    snap = future_to_snap[future]
+                    all_stocks.append(self._failed_stock_from_snapshot(snap, f"評估失敗: {exc}"))
 
         passed_count = sum(1 for s in all_stocks if s.pass_all)
         logger.info("篩選完成，符合條件: %d / 評估: %d / 快照: %d",
                     passed_count, len(all_stocks), len(snapshots))
         return all_stocks
 
-    def _evaluate(self, snap: dict, elapsed_minutes: int) -> ScreenedStock | None:
+    def _evaluate(self, snap: dict) -> ScreenedStock:
         try:
             symbol = str(snap.get("symbol", snap.get("code", "")))
-            if len(symbol) >= 6:
-                return None  # 直接略過權證與特殊商品，避免 yfinance 報錯
-            return self._evaluate_inner(snap, elapsed_minutes)
+            if not symbol:
+                return self._failed_stock_from_snapshot(snap, "缺少股票代號")
+            return self._evaluate_inner(snap)
         except Exception as exc:
             symbol = snap.get("symbol", snap.get("code", "?"))
-            logger.debug("評估 %s 發生例外: %s", symbol, exc)
-            return None
+            logger.warning("評估 %s 發生例外: %s", symbol, exc)
+            return self._failed_stock_from_snapshot(snap, f"評估失敗: {exc}")
 
-    def _evaluate_inner(self, snap: dict, elapsed_minutes: int) -> ScreenedStock:
+    def _evaluate_inner(self, snap: dict) -> ScreenedStock:
         symbol: str = str(snap.get("symbol", snap.get("code", "")))
         name: str = snap.get("name", symbol)
         # 判斷交易所，供 yfinance 加後綴 (.TW / .TWO)
         raw_exchange: str = snap.get("_exchange", snap.get("exchange", "TWSE"))
         exchange = "TWSE" if ("TWSE" in raw_exchange or "TSE" in raw_exchange) else "TPEx"
 
-        # Fugle snapshot 欄位名稱：closePrice, referencePrice, tradeVolume
-        close = float(
-            snap.get("closePrice") or snap.get("close") or snap.get("lastPrice") or 0
+        # Fugle snapshot 欄位名稱：closePrice, referencePrice, totalVolume
+        close = _to_float(
+            snap.get("closePrice") or snap.get("close") or snap.get("lastPrice")
         )
-        prev_close = float(
-            snap.get("referencePrice") or snap.get("previousClose") or 0
+        prev_close = _to_float(
+            snap.get("referencePrice") or snap.get("previousClose")
         )
-        # tradeVolume 單位為「張」
-        volume_lots = float(
-            snap.get("tradeVolume") or snap.get("volume") or snap.get("totalVolume") or 0
-        )
+        volume_lots = _snapshot_volume_lots(snap)
 
         fail_reasons: list[str] = []
 
@@ -249,7 +255,7 @@ class StockScreener:
         if prev_close and prev_close > 0:
             pct_change = (close - prev_close) / prev_close * 100
         else:
-            pct_change = float(snap.get("changePercent", snap.get("change_pct", 0)) or 0)
+            pct_change = _to_float(snap.get("changePercent", snap.get("change_pct")))
 
         if not (self.cfg.price_change_min <= pct_change <= self.cfg.price_change_max):
             fail_reasons.append(
@@ -258,42 +264,35 @@ class StockScreener:
 
         # ── 2. 量比 ──────────────────────────────────────
         volume_ratio = 0.0
-        if not fail_reasons:
-            avg5_lots = self.historical.get_5day_avg_volume(symbol, exchange)
-            if avg5_lots > 0:
-                today_rate = volume_lots / elapsed_minutes
-                hist_rate = avg5_lots / TOTAL_TRADING_MINUTES
-                volume_ratio = today_rate / hist_rate if hist_rate > 0 else 0.0
+        avg5_lots = self.historical.get_5day_avg_volume(symbol, exchange)
+        if avg5_lots > 0:
+            volume_ratio = volume_lots / avg5_lots
             
-            if volume_ratio < self.cfg.volume_ratio_min:
-                fail_reasons.append(f"量比 {volume_ratio:.2f} < {self.cfg.volume_ratio_min}")
+        if volume_ratio < self.cfg.volume_ratio_min:
+            fail_reasons.append(f"量比 {volume_ratio:.2f} < {self.cfg.volume_ratio_min}")
 
         # ── 3. 換手率 ─────────────────────────────────────
         turnover_rate = 0.0
-        shares = 0.0
-        if not fail_reasons:
-            # 發行股數 (股)；Fubon 成交量為張，需 × 1000 換算
-            shares = self.historical.get_shares_outstanding(symbol, exchange)
-            if shares > 0 and volume_lots > 0:
-                volume_shares = volume_lots * 1000
-                est_full_day_shares = volume_shares / elapsed_minutes * TOTAL_TRADING_MINUTES
-                turnover_rate = est_full_day_shares / shares * 100
+        shares = self.historical.get_shares_outstanding(symbol, exchange)
+        # 發行股數 (股)；Fubon 累計成交量為張，需 × 1000 換算
+        if shares > 0 and volume_lots > 0:
+            volume_shares = volume_lots * 1000
+            turnover_rate = volume_shares / shares * 100
             
-            if not (self.cfg.turnover_rate_min <= turnover_rate <= self.cfg.turnover_rate_max):
-                fail_reasons.append(
-                    f"換手率 {turnover_rate:.2f}% ∉ [{self.cfg.turnover_rate_min}, {self.cfg.turnover_rate_max}]%"
-                )
+        if not (self.cfg.turnover_rate_min <= turnover_rate <= self.cfg.turnover_rate_max):
+            fail_reasons.append(
+                f"換手率 {turnover_rate:.2f}% ∉ [{self.cfg.turnover_rate_min}, {self.cfg.turnover_rate_max}]%"
+            )
 
         # ── 4. 市值 ───────────────────────────────────────
         market_cap_100m = 0.0
-        if not fail_reasons:
-            if shares > 0 and close > 0:
-                market_cap_100m = close * shares / 1e8
+        if shares > 0 and close > 0:
+            market_cap_100m = close * shares / 1e8
             
-            if not (self.cfg.market_cap_min_100m <= market_cap_100m <= self.cfg.market_cap_max_100m):
-                fail_reasons.append(
-                    f"市值 {market_cap_100m:.0f}億 ∉ [{self.cfg.market_cap_min_100m:.0f}, {self.cfg.market_cap_max_100m:.0f}]億"
-                )
+        if not (self.cfg.market_cap_min_100m <= market_cap_100m <= self.cfg.market_cap_max_100m):
+            fail_reasons.append(
+                f"市值 {market_cap_100m:.0f}億 ∉ [{self.cfg.market_cap_min_100m:.0f}, {self.cfg.market_cap_max_100m:.0f}]億"
+            )
 
         # ── 5. 近期漲停（僅前四項都通過才查詢，節省 API）────
         had_limit_up = False
@@ -332,4 +331,29 @@ class StockScreener:
             vwap_dip_ok=vwap_dip_ok,
             pass_all=not fail_reasons,
             fail_reasons=fail_reasons,
+        )
+
+    def _failed_stock_from_snapshot(self, snap: dict, reason: str) -> ScreenedStock:
+        symbol = str(snap.get("symbol", snap.get("code", "")) or "?")
+        name = snap.get("name", symbol)
+        close = _to_float(snap.get("closePrice") or snap.get("close") or snap.get("lastPrice"))
+        prev_close = _to_float(snap.get("referencePrice") or snap.get("previousClose"))
+        if prev_close > 0:
+            pct_change = (close - prev_close) / prev_close * 100
+        else:
+            pct_change = _to_float(snap.get("changePercent", snap.get("change_pct")))
+
+        return ScreenedStock(
+            symbol=symbol,
+            name=name,
+            price=close,
+            price_change_pct=round(pct_change, 2),
+            volume_ratio=0.0,
+            turnover_rate_pct=0.0,
+            market_cap_100m=0.0,
+            had_limit_up=False,
+            vwap_above_ratio=0.0,
+            vwap_dip_ok=False,
+            pass_all=False,
+            fail_reasons=[reason],
         )
