@@ -126,7 +126,44 @@ class StockScreener:
     def close(self):
         """釋放連線與記憶體資源"""
         self.realtime.close()
+        self.historical.save_cache()
         self.historical.clear_cache()
+
+    def prefetch(self):
+        """預先抓取所有股票的歷史靜態資料（如股本、5日均量、歷史K線）並寫入快取"""
+        logger.info("開始執行歷史資料預先載入 (Prefetch)...")
+        try:
+            snapshots = self.realtime.get_all_snapshots()
+        except RuntimeError as exc:
+            logger.error("無法取得即時快照: %s", exc)
+            return
+
+        def _fetch_static_data(snap: dict):
+            symbol = str(snap.get("symbol", snap.get("code", "")))
+            if len(symbol) >= 6:
+                return
+            raw_exchange = snap.get("_exchange", snap.get("exchange", "TWSE"))
+            exchange = "TWSE" if ("TWSE" in raw_exchange or "TSE" in raw_exchange) else "TPEx"
+            
+            # 觸發快取
+            self.historical.get_5day_avg_volume(symbol, exchange)
+            self.historical.get_shares_outstanding(symbol, exchange)
+            self.historical.had_limit_up_recently(symbol, exchange, self.cfg.limit_up_lookback_days)
+
+        logger.info("準備為 %d 檔股票預先抓取資料，這可能會花費一些時間...", len(snapshots))
+        
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        # 預先抓取可以使用多一點執行緒，因為不包含複雜運算
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(_fetch_static_data, snap) for snap in snapshots]
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as exc:
+                    pass
+        
+        self.historical.save_cache()
+        logger.info("預先載入完成！")
 
     def run(self) -> list[ScreenedStock]:
         logger.info("開始執行股票篩選...")
@@ -142,10 +179,21 @@ class StockScreener:
         logger.info("共取得 %d 檔股票快照", len(snapshots))
 
         all_stocks: list[ScreenedStock] = []
-        for snap in snapshots:
-            stock = self._evaluate(snap, elapsed_minutes)
-            if stock is not None:
-                all_stocks.append(stock)
+        
+        # 使用 ThreadPoolExecutor 加速多檔股票的 yfinance 歷史資料請求
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_snap = {
+                executor.submit(self._evaluate, snap, elapsed_minutes): snap 
+                for snap in snapshots
+            }
+            for future in as_completed(future_to_snap):
+                try:
+                    stock = future.result()
+                    if stock is not None:
+                        all_stocks.append(stock)
+                except Exception as exc:
+                    logger.error("評估股票時發生例外: %s", exc)
 
         passed_count = sum(1 for s in all_stocks if s.pass_all)
         logger.info("篩選完成，符合條件: %d / 評估: %d / 快照: %d",

@@ -102,16 +102,47 @@ def run_screening(config: dict) -> list[ScreenedStock]:
     return passed_stocks
 
 
+def run_prefetch(config: dict) -> None:
+    logger.info("═" * 50)
+    logger.info("開始執行背景預先載入歷史資料 (Prefetch)")
+    if not is_trading_day():
+        logger.info("今日非台股交易日，略過預先載入")
+        return
+
+    screening_cfg = ScreeningConfig.from_dict(config)
+    screener = StockScreener(screening_cfg)
+    try:
+        screener.prefetch()
+    except Exception as exc:
+        logger.exception("預先載入發生錯誤: %s", exc)
+    finally:
+        screener.close()
+        import gc
+        gc.collect()
+    logger.info("═" * 50)
+
+
 # ────────────────────────────────────────────
 # 排程
 # ────────────────────────────────────────────
 
 def start_scheduler(config: dict):
     import schedule
+    from datetime import datetime, timedelta
 
     run_time = config.get("schedule", {}).get("run_time", "13:00")
-    logger.info("排程啟動，將於每個交易日 %s 執行篩選", run_time)
+    
+    # 計算 prefetch_time (提前一小時)
+    try:
+        rt = datetime.strptime(run_time, "%H:%M")
+        pt = rt - timedelta(hours=1)
+        prefetch_time = pt.strftime("%H:%M")
+    except ValueError:
+        prefetch_time = "12:00"
 
+    logger.info("排程啟動，每日 %s 預載資料，%s 執行篩選", prefetch_time, run_time)
+
+    schedule.every().day.at(prefetch_time).do(run_prefetch, config=config)
     schedule.every().day.at(run_time).do(run_screening, config=config)
 
     while True:
@@ -126,13 +157,16 @@ def start_scheduler(config: dict):
 def main():
     parser = argparse.ArgumentParser(description="股票自動篩選通知系統")
     parser.add_argument("--run-now", action="store_true", help="立即執行一次篩選")
+    parser.add_argument("--prefetch", action="store_true", help="立即執行一次歷史資料預先載入")
     parser.add_argument("--schedule", action="store_true", help="啟動排程模式")
     parser.add_argument("--config", default="config.yaml", help="設定檔路徑")
     args = parser.parse_args()
 
     config = load_config(args.config)
 
-    if args.run_now:
+    if args.prefetch:
+        run_prefetch(config)
+    elif args.run_now:
         run_screening(config)
     else:
         start_scheduler(config)

@@ -159,12 +159,46 @@ def _yf_symbol(symbol: str, exchange: str = "TWSE") -> str:
     return symbol + (".TW" if exchange == "TWSE" else ".TWO")
 
 
+import pickle
+import os
+
+CACHE_FILE = "historical_cache.pkl"
+
 class HistoricalDataClient:
     """透過 yfinance 取得台股歷史資料。"""
 
     def __init__(self):
         self._history_cache: dict[str, pd.DataFrame] = {}
         self._shares_cache: dict[str, float] = {}
+        self.load_cache()
+
+    def load_cache(self):
+        today_str = date.today().isoformat()
+        if os.path.exists(CACHE_FILE):
+            try:
+                with open(CACHE_FILE, "rb") as f:
+                    data = pickle.load(f)
+                if data.get("date") == today_str:
+                    self._history_cache = data.get("history", {})
+                    self._shares_cache = data.get("shares", {})
+                    logger.info("成功載入本日歷史資料快取 (共 %d 筆)", len(self._history_cache))
+                else:
+                    logger.info("快取已過期 (非今日)，建立新快取")
+            except Exception as exc:
+                logger.error("讀取快取失敗: %s", exc)
+
+    def save_cache(self):
+        today_str = date.today().isoformat()
+        try:
+            with open(CACHE_FILE, "wb") as f:
+                pickle.dump({
+                    "date": today_str,
+                    "history": self._history_cache,
+                    "shares": self._shares_cache
+                }, f)
+            logger.info("歷史資料快取已儲存 (共 %d 筆)", len(self._history_cache))
+        except Exception as exc:
+            logger.error("寫入快取失敗: %s", exc)
 
     def _get_history(self, symbol: str, exchange: str, period: str = "2mo") -> pd.DataFrame:
         key = f"{symbol}:{exchange}:{period}"
