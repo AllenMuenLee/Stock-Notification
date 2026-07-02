@@ -1,17 +1,17 @@
 screening:
-  price_change_min: 0.0
-  price_change_max: 9.0
-  volume_ratio_min: 0.2
+  price_change_min: 3.0
+  price_change_max: 10.0
+  volume_ratio_min: 1.0
   turnover_rate_min: 2.0
-  turnover_rate_max: 10.0
-  market_cap_min_100m: 20.0
-  market_cap_max_100m: 1000.0
-  limit_up_lookback_days: 20
-  vwap_above_ratio_min: 0.7
-  vwap_dip_tolerance_pct: 0.5
-  vwap_recovery_bars: 3
+  turnover_rate_max: 15.0
+  market_cap_min_100m: 10.0
+  market_cap_max_100m: 9999.0
+  limit_up_lookback_days: 360
+  vwap_above_ratio_min: 0.9
+  vwap_dip_tolerance_pct: 1.0
+  vwap_recovery_bars: 9
 notification:
-  to_email: ''
+  to_email: limuen.allen@gmail.com
   subject: 【每日股票篩選報告】
   send_if_empty: true
 schedule:

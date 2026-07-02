@@ -1,0 +1,26 @@
+2026-07-02 10:40:40 [INFO] main - 排程啟動，將於每個交易日 13:00 執行篩選
+2026-07-02 13:00:10 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 13:00:10 [INFO] main - 開始執行股票篩選 (2026-07-02 13:00:10)
+2026-07-02 13:07:17 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 13:07:17 [INFO] main - 開始執行股票篩選 (2026-07-02 13:07:17)
+2026-07-02 13:08:04 [INFO] trading_calendar - 已載入 2026 年休市日期 0 筆
+2026-07-02 13:08:04 [INFO] screener - 開始執行股票篩選...
+2026-07-02 13:08:05 [INFO] screener - 取得即時快照...
+2026-07-02 13:09:00 [INFO] data_fetcher - 富邦 SDK 登入成功
+2026-07-02 13:09:11 [INFO] data_fetcher - 富邦 Neo API 登入並初始化成功
+2026-07-02 13:09:39 [ERROR] data_fetcher - 抓取 TWSE 快照失敗: [Fugle API Error] SSLError: HTTPSConnectionPool(host='api.fugle.tw', port=443): Max retries exceeded with url: /marketdata/v1.0/stock/snapshot/quotes/TSE (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1029)')))
+URL: https://api.fugle.tw/marketdata/v1.0/stock/snapshot/quotes/TSE
+2026-07-02 13:12:26 [ERROR] data_fetcher - 抓取 TPEx 快照失敗: [Fugle API Error] SSLError: HTTPSConnectionPool(host='api.fugle.tw', port=443): Max retries exceeded with url: /marketdata/v1.0/stock/snapshot/quotes/OTC (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1029)')))
+URL: https://api.fugle.tw/marketdata/v1.0/stock/snapshot/quotes/OTC
+2026-07-02 13:12:26 [INFO] screener - 共取得 0 檔股票快照
+2026-07-02 13:12:27 [INFO] screener - 篩選完成，符合條件: 0 / 評估: 0 / 快照: 0
+2026-07-02 13:12:28 [INFO] main - 篩選明細已儲存至 results/latest_run.json
+2026-07-02 13:13:46 [INFO] notifier - Email 發送成功 → ['peter20001030@gmail.com']
+2026-07-02 13:13:46 [INFO] main - 本次篩選結束，共 0 檔符合條件
+2026-07-02 13:13:47 [INFO] data_fetcher - 富邦 SDK 登出成功
+2026-07-02 13:13:56 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 13:27:11 [INFO] main - 篩選明細已儲存至 results/latest_run.json
+2026-07-02 13:27:17 [INFO] main - 本次篩選結束，共 58 檔符合條件
+2026-07-02 13:27:26 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 14:23:45 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 14:23:46 [INFO] main - 開始執行股票篩選 (2026-07-02 14:23:46)

@@ -1,0 +1,97 @@
+2026-07-01 20:03:43 [INFO] main - ══════════════════════════════════════════════════
+2026-07-01 20:03:43 [INFO] main - 開始執行股票篩選 (2026-07-01 20:03:43)
+2026-07-01 20:03:43 [INFO] trading_calendar - 已載入 2026 年休市日期 0 筆
+2026-07-01 20:03:43 [INFO] screener - 開始執行股票篩選...
+2026-07-01 20:03:43 [INFO] screener - 取得即時快照...
+2026-07-01 20:03:46 [INFO] data_fetcher - 富邦 SDK 登入成功
+2026-07-01 20:03:46 [INFO] data_fetcher - 富邦 Neo API 登入並初始化成功
+2026-07-01 20:03:47 [INFO] data_fetcher - 取得 TWSE 快照 1528 筆
+2026-07-01 20:03:47 [INFO] data_fetcher - 取得 TPEx 快照 1411 筆
+2026-07-01 20:03:47 [INFO] screener - 共取得 2939 檔股票快照
+2026-07-01 20:04:13 [INFO] screener - 篩選完成，符合條件: 2 / 評估: 2463 / 快照: 2939
+2026-07-01 20:04:13 [INFO] main - 篩選明細已儲存至 results/latest_run.json
+2026-07-01 20:04:14 [INFO] notifier - Email 發送成功 → ['limuen.allen@gmail.com']
+2026-07-01 20:04:14 [INFO] main - 本次篩選結束，共 2 檔符合條件
+2026-07-01 20:04:14 [INFO] data_fetcher - 富邦 SDK 登出成功
+2026-07-01 20:04:14 [INFO] main - ══════════════════════════════════════════════════
+2026-07-01 20:05:53 [INFO] main - ══════════════════════════════════════════════════
+2026-07-01 20:05:53 [INFO] main - 開始執行股票篩選 (2026-07-01 20:05:53)
+2026-07-01 20:05:54 [INFO] trading_calendar - 已載入 2026 年休市日期 0 筆
+2026-07-01 20:05:54 [INFO] screener - 開始執行股票篩選...
+2026-07-01 20:05:54 [INFO] screener - 取得即時快照...
+2026-07-01 20:05:56 [INFO] data_fetcher - 富邦 SDK 登入成功
+2026-07-01 20:05:56 [INFO] data_fetcher - 富邦 Neo API 登入並初始化成功
+2026-07-01 20:05:57 [INFO] data_fetcher - 取得 TWSE 快照 1528 筆
+2026-07-01 20:05:57 [INFO] data_fetcher - 取得 TPEx 快照 1411 筆
+2026-07-01 20:05:57 [INFO] screener - 共取得 2939 檔股票快照
+2026-07-01 20:06:23 [INFO] screener - 篩選完成，符合條件: 2 / 評估: 2463 / 快照: 2939
+2026-07-01 20:06:23 [INFO] main - 篩選明細已儲存至 results/latest_run.json
+2026-07-01 20:06:25 [INFO] notifier - Email 發送成功 → ['peter20001030@gmail.com']
+2026-07-01 20:06:25 [INFO] main - 本次篩選結束，共 2 檔符合條件
+2026-07-01 20:06:25 [INFO] data_fetcher - 富邦 SDK 登出成功
+2026-07-01 20:06:25 [INFO] main - ══════════════════════════════════════════════════
+2026-07-01 20:12:19 [INFO] main - 排程啟動，將於每個交易日 13:00 執行篩選
+2026-07-01 20:14:36 [INFO] main - 排程啟動，將於每個交易日 13:00 執行篩選
+2026-07-01 21:48:45 [INFO] main - 排程啟動，將於每個交易日 13:00 執行篩選
+2026-07-02 13:00:07 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 13:00:07 [INFO] main - 開始執行股票篩選 (2026-07-02 13:00:07)
+2026-07-02 13:00:07 [INFO] trading_calendar - 已載入 2026 年休市日期 0 筆
+2026-07-02 13:00:07 [INFO] screener - 開始執行股票篩選...
+2026-07-02 13:00:07 [INFO] screener - 取得即時快照...
+2026-07-02 13:00:10 [INFO] data_fetcher - 富邦 SDK 登入成功
+2026-07-02 13:00:10 [INFO] data_fetcher - 富邦 Neo API 登入並初始化成功
+2026-07-02 13:00:10 [INFO] trading_calendar - 已載入 2026 年休市日期 0 筆
+2026-07-02 13:00:10 [INFO] screener - 開始執行股票篩選...
+2026-07-02 13:00:10 [INFO] screener - 取得即時快照...
+2026-07-02 13:00:10 [INFO] data_fetcher - 取得 TWSE 快照 1527 筆
+2026-07-02 13:00:11 [INFO] data_fetcher - 取得 TPEx 快照 1414 筆
+2026-07-02 13:00:11 [INFO] screener - 共取得 2941 檔股票快照
+2026-07-02 13:00:13 [INFO] data_fetcher - 富邦 SDK 登入成功
+2026-07-02 13:00:13 [INFO] data_fetcher - 富邦 Neo API 登入並初始化成功
+2026-07-02 13:00:13 [INFO] data_fetcher - 取得 TWSE 快照 1527 筆
+2026-07-02 13:00:14 [INFO] data_fetcher - 取得 TPEx 快照 1414 筆
+2026-07-02 13:00:14 [INFO] screener - 共取得 2941 檔股票快照
+2026-07-02 13:00:16 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 13:00:16 [INFO] main - 開始執行股票篩選 (2026-07-02 13:00:16)
+2026-07-02 13:00:16 [INFO] trading_calendar - 已載入 2026 年休市日期 0 筆
+2026-07-02 13:00:16 [INFO] screener - 開始執行股票篩選...
+2026-07-02 13:00:16 [INFO] screener - 取得即時快照...
+2026-07-02 13:00:18 [INFO] data_fetcher - 富邦 SDK 登入成功
+2026-07-02 13:00:19 [INFO] data_fetcher - 富邦 Neo API 登入並初始化成功
+2026-07-02 13:00:19 [INFO] data_fetcher - 取得 TWSE 快照 1527 筆
+2026-07-02 13:00:19 [INFO] data_fetcher - 取得 TPEx 快照 1414 筆
+2026-07-02 13:00:19 [INFO] screener - 共取得 2941 檔股票快照
+2026-07-02 13:00:20 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 13:00:20 [INFO] main - 開始執行股票篩選 (2026-07-02 13:00:20)
+2026-07-02 13:00:20 [INFO] trading_calendar - 已載入 2026 年休市日期 0 筆
+2026-07-02 13:00:20 [INFO] screener - 開始執行股票篩選...
+2026-07-02 13:00:20 [INFO] screener - 取得即時快照...
+2026-07-02 13:00:22 [INFO] data_fetcher - 富邦 SDK 登入成功
+2026-07-02 13:00:23 [INFO] data_fetcher - 富邦 Neo API 登入並初始化成功
+2026-07-02 13:00:23 [INFO] data_fetcher - 取得 TWSE 快照 1527 筆
+2026-07-02 13:00:24 [INFO] data_fetcher - 取得 TPEx 快照 1414 筆
+2026-07-02 13:00:24 [INFO] screener - 共取得 2941 檔股票快照
+2026-07-02 13:06:16 [ERROR] data_fetcher - 取得 3577 分鐘 K 棒失敗: [Fugle API Error] SSLError: HTTPSConnectionPool(host='api.fugle.tw', port=443): Max retries exceeded with url: /marketdata/v1.0/stock/intraday/candles/3577?timeframe=1 (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1029)')))
+URL: https://api.fugle.tw/marketdata/v1.0/stock/intraday/candles/3577?timeframe=1
+Params: {'timeframe': '1'}
+2026-07-02 13:27:06 [INFO] screener - 篩選完成，符合條件: 58 / 評估: 2466 / 快照: 2941
+2026-07-02 13:27:17 [INFO] notifier - Email 發送成功 → ['peter20001030@gmail.com']
+2026-07-02 13:27:18 [INFO] data_fetcher - 富邦 SDK 登出成功
+2026-07-02 13:28:10 [INFO] screener - 篩選完成，符合條件: 63 / 評估: 2466 / 快照: 2941
+2026-07-02 13:28:15 [INFO] main - 篩選明細已儲存至 results/latest_run.json
+2026-07-02 13:28:18 [INFO] notifier - Email 發送成功 → ['peter20001030@gmail.com']
+2026-07-02 13:28:18 [INFO] main - 本次篩選結束，共 63 檔符合條件
+2026-07-02 13:28:19 [INFO] data_fetcher - 富邦 SDK 登出成功
+2026-07-02 13:28:27 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 13:37:21 [INFO] screener - 篩選完成，符合條件: 64 / 評估: 2466 / 快照: 2941
+2026-07-02 13:37:25 [INFO] main - 篩選明細已儲存至 results/latest_run.json
+2026-07-02 13:37:28 [INFO] notifier - Email 發送成功 → ['peter20001030@gmail.com']
+2026-07-02 13:37:28 [INFO] main - 本次篩選結束，共 64 檔符合條件
+2026-07-02 13:37:29 [INFO] data_fetcher - 富邦 SDK 登出成功
+2026-07-02 13:37:34 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 13:40:16 [INFO] screener - 篩選完成，符合條件: 58 / 評估: 2466 / 快照: 2941
+2026-07-02 13:40:19 [INFO] main - 篩選明細已儲存至 results/latest_run.json
+2026-07-02 13:40:22 [INFO] notifier - Email 發送成功 → ['peter20001030@gmail.com']
+2026-07-02 13:40:22 [INFO] main - 本次篩選結束，共 58 檔符合條件
+2026-07-02 13:40:23 [INFO] data_fetcher - 富邦 SDK 登出成功
+2026-07-02 13:40:28 [INFO] main - ══════════════════════════════════════════════════
