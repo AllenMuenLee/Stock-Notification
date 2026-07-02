@@ -142,10 +142,21 @@ class StockScreener:
         logger.info("共取得 %d 檔股票快照", len(snapshots))
 
         all_stocks: list[ScreenedStock] = []
-        for snap in snapshots:
-            stock = self._evaluate(snap, elapsed_minutes)
-            if stock is not None:
-                all_stocks.append(stock)
+        
+        # 使用 ThreadPoolExecutor 加速多檔股票的 yfinance 歷史資料請求
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_snap = {
+                executor.submit(self._evaluate, snap, elapsed_minutes): snap 
+                for snap in snapshots
+            }
+            for future in as_completed(future_to_snap):
+                try:
+                    stock = future.result()
+                    if stock is not None:
+                        all_stocks.append(stock)
+                except Exception as exc:
+                    logger.error("評估股票時發生例外: %s", exc)
 
         passed_count = sum(1 for s in all_stocks if s.pass_all)
         logger.info("篩選完成，符合條件: %d / 評估: %d / 快照: %d",
