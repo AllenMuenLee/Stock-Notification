@@ -11,3 +11,170 @@
 2026-07-02 14:17:43 [ERROR] notifier - 未設定收件人 Email，請確認 config.yaml 或 .env
 2026-07-02 14:17:43 [INFO] main - 本次篩選結束，共 0 檔符合條件
 2026-07-02 14:17:43 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 14:19:15 [INFO] main - ══════════════════════════════════════════════════
+2026-07-02 14:19:15 [INFO] main - 開始執行股票篩選 (2026-07-02 14:19:15)
+2026-07-02 14:19:20 [INFO] trading_calendar - 已載入 2026 年休市日期 0 筆
+2026-07-02 14:19:20 [INFO] screener - 開始執行股票篩選...
+2026-07-02 14:19:20 [INFO] screener - 取得即時快照...
+2026-07-02 14:19:26 [INFO] data_fetcher - 富邦 SDK 登入成功
+2026-07-02 14:19:34 [INFO] data_fetcher - 富邦 Neo API 登入並初始化成功
+2026-07-02 14:19:35 [INFO] data_fetcher - 取得 TWSE 快照 1527 筆
+2026-07-02 14:19:36 [INFO] data_fetcher - 取得 TPEx 快照 1414 筆
+2026-07-02 14:19:36 [INFO] screener - 共取得 2941 檔股票快照
+2026-07-02 14:22:38 [ERROR] data_fetcher - yfinance 69821.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 6983.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 69822.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 6996.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 74022.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 7584.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 75562.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 7556.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 75561.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 76101.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 7642.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 7709.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 7704.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:39 [ERROR] data_fetcher - yfinance 7703.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:41 [ERROR] data_fetcher - yfinance 7712.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:41 [ERROR] data_fetcher - yfinance 7713.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:41 [ERROR] data_fetcher - yfinance 7714.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:41 [ERROR] data_fetcher - yfinance 7716.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:41 [ERROR] data_fetcher - yfinance 77131.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7723.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7728.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7738.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7734.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7743.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7747.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7770.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7753.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:42 [ERROR] data_fetcher - yfinance 7782.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 7805.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 7792.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 7794.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 7810.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 8024.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 7839.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 8027.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 80212.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 7811.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 80273.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:43 [ERROR] data_fetcher - yfinance 8038.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:44 [ERROR] data_fetcher - yfinance 8032.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:44 [ERROR] data_fetcher - yfinance 8042.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:44 [ERROR] data_fetcher - yfinance 8040.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:44 [ERROR] data_fetcher - yfinance 80282.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:44 [ERROR] data_fetcher - yfinance 80426.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:44 [ERROR] data_fetcher - yfinance 8044.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8049.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 80506.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8050.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8059.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8067.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8068.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8071.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8069.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8076.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8074.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8077.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8084.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8085.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8083.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:45 [ERROR] data_fetcher - yfinance 8080.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:46 [ERROR] data_fetcher - yfinance 8086.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:46 [ERROR] data_fetcher - yfinance 8091.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:46 [ERROR] data_fetcher - yfinance 80872.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:46 [ERROR] data_fetcher - yfinance 8089.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:46 [ERROR] data_fetcher - yfinance 80914.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 8096.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 8092.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 8093.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 80924.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 8099.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 8102.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 8109.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 81114.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 81042.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 8147.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 81473.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 8155.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 81715.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 81551.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:47 [ERROR] data_fetcher - yfinance 81714.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 8182.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 8183.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 82103.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 8227.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 8240.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 82102.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 8255.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 8234.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:48 [ERROR] data_fetcher - yfinance 82711.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 8289.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 8349A.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 8279.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 8349.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 83742.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 8403.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 8383.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 8409.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 84041.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:49 [ERROR] data_fetcher - yfinance 8390.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 84222.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 8421.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 8415.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 84221.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 84113.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 84312.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 8424.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 8432.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 8426.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:50 [ERROR] data_fetcher - yfinance 8433.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 8435.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 8440.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 84333.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 84332.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 8436.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 84422.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 84662.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 84624.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 8450.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:51 [ERROR] data_fetcher - yfinance 8455.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 84672.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 84673.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 84732.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 84881.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 84781.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 8489.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 84891.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 8917.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 8921.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:52 [ERROR] data_fetcher - yfinance 8923.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:53 [ERROR] data_fetcher - yfinance 89278.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:53 [ERROR] data_fetcher - yfinance 8924.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:53 [ERROR] data_fetcher - yfinance 89277.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:53 [ERROR] data_fetcher - yfinance 8930.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:53 [ERROR] data_fetcher - yfinance 8928.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 8935.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 8931.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 8938.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 8933.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 8941.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 98026.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 89964.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 99353.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 99332.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 99063.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 99412.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 9950.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 99587.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 9960.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 9951.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 99588.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [ERROR] data_fetcher - yfinance 9962.TWO 失敗: Too Many Requests. Rate limited. Try after a while.
+2026-07-02 14:22:54 [INFO] screener - 篩選完成，符合條件: 5 / 評估: 2466 / 快照: 2941
+2026-07-02 14:22:54 [INFO] main - 篩選明細已儲存至 results\latest_run.json
+2026-07-02 14:22:54 [ERROR] notifier - 未設定收件人 Email，請確認 config.yaml 或 .env
+2026-07-02 14:22:54 [INFO] main - 本次篩選結束，共 5 檔符合條件
+2026-07-02 14:22:54 [INFO] data_fetcher - 富邦 SDK 登出成功
+2026-07-02 14:22:55 [INFO] main - ══════════════════════════════════════════════════
