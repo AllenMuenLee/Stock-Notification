@@ -132,13 +132,13 @@ def start_scheduler(config: dict):
 
     run_time = config.get("schedule", {}).get("run_time", "13:00")
     
-    # 計算 prefetch_time (提前一小時)
+    # 計算 prefetch_time (提前五分鐘)
     try:
         rt = datetime.strptime(run_time, "%H:%M")
-        pt = rt - timedelta(hours=1)
+        pt = rt - timedelta(minutes=5)
         prefetch_time = pt.strftime("%H:%M")
     except ValueError:
-        prefetch_time = "12:00"
+        prefetch_time = "12:55"
 
     logger.info("排程啟動，每日 %s 預載資料，%s 執行篩選", prefetch_time, run_time)
 

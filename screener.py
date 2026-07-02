@@ -130,7 +130,7 @@ class StockScreener:
         self.historical.clear_cache()
 
     def prefetch(self):
-        """預先抓取所有股票的歷史靜態資料（如股本、5日均量、歷史K線）並寫入快取"""
+        """預先抓取符合漲幅條件之股票的歷史靜態資料（如股本、5日均量、歷史K線）並寫入快取"""
         logger.info("開始執行歷史資料預先載入 (Prefetch)...")
         try:
             snapshots = self.realtime.get_all_snapshots()
@@ -142,6 +142,19 @@ class StockScreener:
             symbol = str(snap.get("symbol", snap.get("code", "")))
             if len(symbol) >= 6:
                 return
+
+            # --- 先用即時快照檢查漲幅，只有符合條件的才抓取歷史資料 ---
+            close = float(snap.get("closePrice") or snap.get("close") or snap.get("lastPrice") or 0)
+            prev_close = float(snap.get("referencePrice") or snap.get("previousClose") or 0)
+            if prev_close and prev_close > 0:
+                pct_change = (close - prev_close) / prev_close * 100
+            else:
+                pct_change = float(snap.get("changePercent", snap.get("change_pct", 0)) or 0)
+
+            if not (self.cfg.price_change_min <= pct_change <= self.cfg.price_change_max):
+                return
+            # ---------------------------------------------------------
+
             raw_exchange = snap.get("_exchange", snap.get("exchange", "TWSE"))
             exchange = "TWSE" if ("TWSE" in raw_exchange or "TSE" in raw_exchange) else "TPEx"
             
@@ -150,7 +163,7 @@ class StockScreener:
             self.historical.get_shares_outstanding(symbol, exchange)
             self.historical.had_limit_up_recently(symbol, exchange, self.cfg.limit_up_lookback_days)
 
-        logger.info("準備為 %d 檔股票預先抓取資料，這可能會花費一些時間...", len(snapshots))
+        logger.info("準備過濾並為可能符合條件的股票預先抓取資料...")
         
         from concurrent.futures import ThreadPoolExecutor, as_completed
         # 預先抓取可以使用多一點執行緒，因為不包含複雜運算
