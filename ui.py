@@ -12,6 +12,7 @@ import sys
 import threading
 import yaml
 import hmac
+import socket
 import streamlit as st
 
 CONFIG_FILE = "config.yaml"
@@ -47,6 +48,13 @@ def save_env(data):
         for k, v in data.items():
             f.write(f"{k}={v}\n")
 
+def is_scheduler_running():
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("127.0.0.1", 65432))
+        return False
+    except socket.error:
+        return True
 
 st.set_page_config(page_title="股票自動篩選系統 — 參數設定", layout="centered")
 st.title("股票自動篩選系統 — 參數設定")
@@ -162,7 +170,10 @@ with tab4:
     st.subheader("執行控制")
     col1, col2 = st.columns(2)
     run_btn = col1.button("▶ 立即執行篩選", use_container_width=True, disabled=st.session_state.is_running)
-    sched_btn = col2.button("⏰ 啟動排程 (背景執行)", use_container_width=True, disabled=st.session_state.is_running)
+    
+    is_sched_running = is_scheduler_running()
+    btn_text = "⏰ 排程執行中" if is_sched_running else "⏰ 啟動排程 (背景執行)"
+    sched_btn = col2.button(btn_text, use_container_width=True, disabled=st.session_state.is_running or is_sched_running)
 
     # 點擊執行時自動隱藏明細，避免卡頓
     if run_btn:

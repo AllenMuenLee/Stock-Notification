@@ -129,6 +129,17 @@ def run_prefetch(config: dict) -> None:
 def start_scheduler(config: dict):
     import schedule
     from datetime import datetime, timedelta
+    import socket
+    import sys
+
+    # 確保只有一個排程實例在執行 (使用 Socket Bind 機制)
+    lock_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        lock_socket.bind(("127.0.0.1", 65432))
+    except socket.error:
+        logger.warning("排程已經在執行中，忽略本次啟動。")
+        sys.exit(0)
+
 
     run_time = config.get("schedule", {}).get("run_time", "13:00")
     
