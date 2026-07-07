@@ -140,53 +140,31 @@ class StockScreener:
         self.historical.clear_cache()
 
     def prefetch(self):
-        """預先抓取符合漲幅條件之股票的歷史靜態資料（如股本、5日均量、歷史K線）並寫入快取"""
+        """預先抓取所有上市櫃公司的歷史資料與股本"""
         logger.info("開始執行歷史資料預先載入 (Prefetch)...")
+        
+        # 1. 透過政府 OpenAPI 抓取所有股本
+        self.historical.prefetch_all_shares()
+        
         try:
             snapshots = self.realtime.get_all_snapshots()
         except RuntimeError as exc:
             logger.error("無法取得即時快照: %s", exc)
             return
 
-        def _fetch_static_data(snap: dict):
+        symbol_exchanges = []
+        for snap in snapshots:
             symbol = str(snap.get("symbol", snap.get("code", "")))
-            if not symbol:
-                return
+            if symbol:
+                raw_exchange = snap.get("_exchange", snap.get("exchange", "TWSE"))
+                exchange = "TWSE" if ("TWSE" in raw_exchange or "TSE" in raw_exchange) else "TPEx"
+                symbol_exchanges.append((symbol, exchange))
 
-            # --- 先用即時快照檢查漲幅，只有符合條件的才抓取歷史資料 ---
-            close = _to_float(snap.get("closePrice") or snap.get("close") or snap.get("lastPrice"))
-            prev_close = _to_float(snap.get("referencePrice") or snap.get("previousClose"))
-            if prev_close and prev_close > 0:
-                pct_change = (close - prev_close) / prev_close * 100
-            else:
-                pct_change = _to_float(snap.get("changePercent", snap.get("change_pct")))
-
-            if not (self.cfg.price_change_min <= pct_change <= self.cfg.price_change_max):
-                return
-            # ---------------------------------------------------------
-
-            raw_exchange = snap.get("_exchange", snap.get("exchange", "TWSE"))
-            exchange = "TWSE" if ("TWSE" in raw_exchange or "TSE" in raw_exchange) else "TPEx"
-            
-            # 觸發快取
-            self.historical.get_5day_avg_volume(symbol, exchange)
-            self.historical.get_shares_outstanding(symbol, exchange)
-            self.historical.had_limit_up_recently(symbol, exchange, self.cfg.limit_up_lookback_days)
-
-        logger.info("準備過濾並為可能符合條件的股票預先抓取資料...")
-        
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        # 預先抓取可以使用多一點執行緒，因為不包含複雜運算
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(_fetch_static_data, snap) for snap in snapshots]
-            for future in as_completed(futures):
-                try:
-                    future.result()
-                except Exception as exc:
-                    pass
+        if symbol_exchanges:
+            self.historical.prefetch_all_history(symbol_exchanges, period="3mo")
         
         self.historical.save_cache()
-        logger.info("預先載入完成！")
+        logger.info("全市場歷史資料與股本預先載入完成！")
 
     def run(self) -> list[ScreenedStock]:
         logger.info("開始執行股票篩選...")

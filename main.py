@@ -80,6 +80,9 @@ def run_screening(config: dict) -> list[ScreenedStock]:
 
     passed_stocks = []
     try:
+        # 確保在執行篩選前，歷史資料皆已透過批次機制 (具備重試與略過保護) 載入
+        screener.prefetch()
+        
         all_stocks = screener.run()
         passed_stocks = [s for s in all_stocks if s.pass_all]
         save_results(all_stocks, run_time)
@@ -143,10 +146,10 @@ def start_scheduler(config: dict):
 
     run_time = config.get("schedule", {}).get("run_time", "13:00")
     
-    # 計算 prefetch_time (提前五分鐘)
+    # 計算 prefetch_time (提前 30 分鐘)
     try:
         rt = datetime.strptime(run_time, "%H:%M")
-        pt = rt - timedelta(minutes=5)
+        pt = rt - timedelta(minutes=30)
         prefetch_time = pt.strftime("%H:%M")
     except ValueError:
         prefetch_time = "12:55"

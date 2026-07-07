@@ -168,8 +168,9 @@ class HistoricalDataClient:
     """透過 yfinance 取得台股歷史資料。"""
 
     def __init__(self):
-        self._history_cache: dict[str, pd.DataFrame] = {}
+        self._history_cache: dict[str, pd.DataFrame | None] = {}
         self._shares_cache: dict[str, float] = {}
+        self._rate_limited = False
         self.load_cache()
 
     def load_cache(self):
@@ -193,24 +194,178 @@ class HistoricalDataClient:
             with open(CACHE_FILE, "wb") as f:
                 pickle.dump({
                     "date": today_str,
-                    "history": self._history_cache,
+                    # 只儲存成功的歷史資料，失敗的 (None 或 empty) 不儲存，留待下次執行重試
+                    "history": {k: v for k, v in self._history_cache.items() if v is not None and not v.empty},
                     "shares": self._shares_cache
                 }, f)
             logger.info("歷史資料快取已儲存 (共 %d 筆)", len(self._history_cache))
         except Exception as exc:
             logger.error("寫入快取失敗: %s", exc)
 
-    def _get_history(self, symbol: str, exchange: str, period: str = "2mo") -> pd.DataFrame:
+    def _get_history(self, symbol: str, exchange: str, period: str = "3mo") -> pd.DataFrame:
+        # 排除大盤指數與類股指數 (通常以 IX 開頭)，避免浪費 API 請求
+        if symbol.startswith("IX") or symbol.startswith("IR"):
+            return pd.DataFrame()
+            
         key = f"{symbol}:{exchange}:{period}"
-        if key not in self._history_cache:
-            yf_sym = _yf_symbol(symbol, exchange)
-            try:
-                df = yf.Ticker(yf_sym).history(period=period, auto_adjust=True)
+        if key in self._history_cache:
+            val = self._history_cache[key]
+            return val if val is not None else pd.DataFrame()
+            
+        if self._rate_limited:
+            # 如果已經觸發 Rate Limit 熔斷機制，本次執行不再發送獨立請求
+            self._history_cache[key] = None
+            return pd.DataFrame()
+
+        yf_sym = _yf_symbol(symbol, exchange)
+        try:
+            df = yf.Ticker(yf_sym).history(period=period, auto_adjust=True)
+            if df is not None and not df.empty:
                 self._history_cache[key] = df
-            except Exception as exc:
-                logger.error("yfinance %s 失敗: %s", yf_sym, exc)
-                self._history_cache[key] = pd.DataFrame()
-        return self._history_cache[key]
+            else:
+                self._history_cache[key] = None
+                return pd.DataFrame()
+        except Exception as exc:
+            err_msg = str(exc)
+            logger.error("yfinance %s 獨立抓取失敗: %s", yf_sym, err_msg)
+            if "Rate limited" in err_msg or "429" in err_msg or "Too Many Requests" in err_msg:
+                logger.warning("檢測到 yfinance Rate Limit，啟動熔斷機制，本次執行後續將不再發送獨立請求！")
+                self._rate_limited = True
+            
+            self._history_cache[key] = None
+            return pd.DataFrame()
+            
+        return self._history_cache.get(key, pd.DataFrame())
+
+    def prefetch_all_history(self, symbol_exchanges: list[tuple[str, str]], period: str = "3mo"):
+        """使用 yfinance 的 bulk download 一次性批次下載歷史資料，並具備 Rate Limit 重試機制"""
+        import time
+        logger.info(f"準備批次預載 {len(symbol_exchanges)} 檔歷史資料...")
+        
+        yf_sym_to_key = {}
+        for sym, exch in symbol_exchanges:
+            # 排除大盤指數與類股指數 (通常以 IX 或 IR 開頭)
+            if sym.startswith("IX") or sym.startswith("IR"):
+                continue
+                
+            key = f"{sym}:{exch}:{period}"
+            if key not in self._history_cache:
+                yf_sym_to_key[_yf_symbol(sym, exch)] = key
+                
+        yf_syms = list(yf_sym_to_key.keys())
+        
+        max_retries = 3
+        retry_delay = 60  # Rate limit 恢復等待時間 (秒)
+        chunk_size = 50
+        
+        for attempt in range(max_retries):
+            if not yf_syms:
+                logger.info("所有歷史資料皆已成功快取！")
+                break
+                
+            logger.info(f"--- 第 {attempt + 1} 次嘗試下載 (共 {len(yf_syms)} 檔) ---")
+            missing_syms = []
+            
+            for i in range(0, len(yf_syms), chunk_size):
+                chunk = yf_syms[i:i+chunk_size]
+                logger.info(f"下載歷史資料進度: {i}/{len(yf_syms)}...")
+                
+                import sys, io
+                f_err = io.StringIO()
+                old_stderr = sys.stderr
+                sys.stderr = f_err
+                
+                df = None
+                try:
+                    df = yf.download(chunk, period=period, progress=False, threads=True)
+                except Exception as e:
+                    logger.error(f"批次下載歷史資料發生錯誤: {e}")
+                finally:
+                    sys.stderr = old_stderr
+                    
+                stderr_output = f_err.getvalue()
+                permanently_failed = set()
+                for line in stderr_output.splitlines():
+                    if "delisted" in line.lower() or "no data found" in line.lower() or "not found" in line.lower():
+                        for yf_sym in chunk:
+                            if yf_sym in line:
+                                permanently_failed.add(yf_sym)
+
+                if df is not None and not df.empty:
+                    if df.columns.nlevels == 2:
+                        for yf_sym in chunk:
+                            key = yf_sym_to_key[yf_sym]
+                            try:
+                                sub_df = df.xs(yf_sym, level=1, axis=1).dropna(how='all')
+                                if not sub_df.empty:
+                                    self._history_cache[key] = sub_df
+                            except KeyError:
+                                pass
+                    elif len(chunk) == 1:
+                        key = yf_sym_to_key[chunk[0]]
+                        sub_df = df.dropna(how='all')
+                        if not sub_df.empty:
+                            self._history_cache[key] = sub_df
+                
+                # 檢查這批有哪些還沒抓到
+                for yf_sym in chunk:
+                    key = yf_sym_to_key[yf_sym]
+                    if key not in self._history_cache or self._history_cache[key] is None or self._history_cache[key].empty:
+                        if yf_sym in permanently_failed:
+                            # 標記為空 DataFrame，避免進入 missing_syms 觸發 Rate Limit 的 60 秒重試
+                            logger.debug(f"{yf_sym} 已下市或無資料，跳過重試")
+                            self._history_cache[key] = pd.DataFrame()
+                        else:
+                            missing_syms.append(yf_sym)
+                
+                # 每批次結束休息 1.5 秒，避免觸發 API 連續請求限制
+                time.sleep(1.5)
+                
+            if not missing_syms:
+                logger.info("本輪下載所有排定的資料皆已完成！")
+                break
+                
+            yf_syms = missing_syms
+            if attempt < max_retries - 1:
+                logger.warning(f"仍有 {len(missing_syms)} 檔資料遺漏或遇 Rate Limit 被擋。休息 {retry_delay} 秒等待限制解除後重試...")
+                time.sleep(retry_delay)
+            else:
+                logger.error(f"達到最大重試次數 ({max_retries}次)，最終仍有 {len(missing_syms)} 檔資料無法取得 (可能已下市或無資料)。")
+
+    def prefetch_all_shares(self):
+        """一次性透過政府 OpenAPI 取得所有上市櫃公司的發行股數，避免 yfinance rate limit。"""
+        import requests
+        import urllib3
+        urllib3.disable_warnings()
+        
+        twse_url = "https://openapi.twse.com.tw/v1/opendata/t187ap03_L"
+        tpex_url = "https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap03_O"
+        
+        try:
+            logger.info("從 TWSE 獲取上市股本...")
+            res = requests.get(twse_url, timeout=10)
+            if res.status_code == 200:
+                for item in res.json():
+                    symbol = item.get("公司代號", "")
+                    shares_str = item.get("已發行普通股數或TDR原股發行股數", "0")
+                    if symbol and shares_str.isdigit():
+                        self._shares_cache[f"{symbol}:TWSE"] = float(shares_str)
+        except Exception as e:
+            logger.error(f"TWSE 股本獲取失敗: {e}")
+
+        try:
+            logger.info("從 TPEx 獲取上櫃股本...")
+            res = requests.get(tpex_url, verify=False, timeout=10)
+            if res.status_code == 200:
+                for item in res.json():
+                    symbol = item.get("公司代號", "")
+                    shares_str = item.get("已發行普通股數或TDR原股發行股數", "0")
+                    if symbol and shares_str.isdigit():
+                        self._shares_cache[f"{symbol}:TPEx"] = float(shares_str)
+        except Exception as e:
+            logger.error(f"TPEx 股本獲取失敗: {e}")
+        
+        logger.info(f"股本預載完成，共 {len(self._shares_cache)} 筆")
 
     def get_shares_outstanding(self, symbol: str, exchange: str = "TWSE") -> float:
         """取得發行股數（單位：股）。結果快取於 session 中。"""
@@ -235,7 +390,8 @@ class HistoricalDataClient:
             except Exception as exc:
                 logger.debug("無法取得 %s 股本: %s", yf_sym, exc)
 
-        self._shares_cache[key] = shares
+        if shares > 0:
+            self._shares_cache[key] = shares
         return shares
 
     def had_limit_up_recently(
@@ -253,7 +409,7 @@ class HistoricalDataClient:
         不含今日的近 5 個完整交易日平均成交量（單位：張/lot）。
         yfinance Volume 為「股」，除以 1000 換算為「張」。
         """
-        df = self._get_history(symbol, exchange, period="15d")
+        df = self._get_history(symbol, exchange, period="3mo")
         if df.empty or "Volume" not in df.columns:
             return 0.0
         try:
