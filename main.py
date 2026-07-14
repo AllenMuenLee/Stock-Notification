@@ -129,7 +129,7 @@ def run_prefetch(config: dict) -> None:
 # 排程
 # ────────────────────────────────────────────
 
-def start_scheduler(config: dict):
+def start_scheduler(config_path: str):
     import schedule
     from datetime import datetime, timedelta
     import socket
@@ -143,23 +143,40 @@ def start_scheduler(config: dict):
         logger.warning("排程已經在執行中，忽略本次啟動。")
         sys.exit(0)
 
+    last_run_time = None
 
-    run_time = config.get("schedule", {}).get("run_time", "13:00")
-    
-    # 計算 prefetch_time (提前 30 分鐘)
-    try:
-        rt = datetime.strptime(run_time, "%H:%M")
-        pt = rt - timedelta(minutes=30)
-        prefetch_time = pt.strftime("%H:%M")
-    except ValueError:
-        prefetch_time = "12:55"
-
-    logger.info("排程啟動，每日 %s 預載資料，%s 執行篩選", prefetch_time, run_time)
-
-    schedule.every().day.at(prefetch_time).do(run_prefetch, config=config)
-    schedule.every().day.at(run_time).do(run_screening, config=config)
+    def scheduled_prefetch():
+        load_dotenv(override=True)
+        run_prefetch(load_config(config_path))
+        
+    def scheduled_screening():
+        load_dotenv(override=True)
+        run_screening(load_config(config_path))
 
     while True:
+        # 動態重新載入設定以取得最新排程時間
+        current_config = load_config(config_path)
+        current_run_time = current_config.get("schedule", {}).get("run_time", "13:00")
+        
+        if current_run_time != last_run_time:
+            schedule.clear()
+            
+            # 計算 prefetch_time (提前 30 分鐘)
+            try:
+                rt = datetime.strptime(current_run_time, "%H:%M")
+                pt = rt - timedelta(minutes=30)
+                prefetch_time = pt.strftime("%H:%M")
+            except ValueError:
+                prefetch_time = "12:55"
+                current_run_time = "13:00"
+
+            logger.info("排程設定更新，每日 %s 預載資料，%s 執行篩選", prefetch_time, current_run_time)
+            
+            schedule.every().day.at(prefetch_time).do(scheduled_prefetch)
+            schedule.every().day.at(current_run_time).do(scheduled_screening)
+            
+            last_run_time = current_run_time
+
         schedule.run_pending()
         time.sleep(30)
 
@@ -183,7 +200,7 @@ def main():
     elif args.run_now:
         run_screening(config)
     else:
-        start_scheduler(config)
+        start_scheduler(args.config)
 
 
 if __name__ == "__main__":
